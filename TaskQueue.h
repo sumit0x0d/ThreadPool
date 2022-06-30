@@ -1,12 +1,11 @@
 #ifndef TASK_QUEUE_H
 #define TASK_QUEUE_H
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include "ThreadPool.h"
 
 typedef struct Task {
-    void (*function)();
+    void (*function)(void* argument);
+    void* argument;
 } Task;
 
 typedef struct TaskQueue {
@@ -68,14 +67,14 @@ static inline void* TaskQueue_back(TaskQueue* TQ)
     return TQ->array + (TQ->back - 1);
 }
 
-static inline void TaskQueue_enqueue(TaskQueue* TQ, Task task)
+static inline void TaskQueue_enqueue(TaskQueue* TQ, Task* task)
 {
     if(TQ->back == TQ->capacity) {
         memmove(TQ->array, TQ->array + TQ->front, TQ->size);
         TQ->front = 0;
         TQ->back = TQ->size;
     }
-    TQ->array[TQ->back] = task;
+    memcpy(TQ->array + TQ->back, task, sizeof (Task));
     TQ->back = TQ->back + 1;
     TQ->size = TQ->size + 1;
 }
