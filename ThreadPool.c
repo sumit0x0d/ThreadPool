@@ -1,11 +1,22 @@
 #include "TaskQueue.h"
-#include "ThreadPool.h"
 
 static void* thread_create(void* TP)
 {
     Task task;
     for(;;) {
-        pthread_mutex_lock(&((ThreadPool*)TP)->mutex);
+        if(pthread_mutex_lock(&((ThreadPool*)TP)->mutex)) {
+            return NULL;
+        }
+        while(((ThreadPool*)TP)->active) {
+            if(pthread_cond_wait(&((ThreadPool*)TP)->cond, &((ThreadPool*)TP)->mutex)) {
+                return NULL;
+            }
+            if(((ThreadPool*)TP)->task_queue->size) {
+                Task task = TaskQueue_front(((ThreadPool*)TP)->task_queue);
+                TaskQueue_dequeue(((ThreadPool*)TP)->task_queue);
+                task.function(task.argument);
+            }
+        }
     }
 }
 

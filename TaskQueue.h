@@ -57,14 +57,9 @@ static inline void TaskQueue_destroy(TaskQueue* TQ)
     TQ = NULL;
 }
 
-static inline void* TaskQueue_front(TaskQueue* TQ)
+static inline Task TaskQueue_front(TaskQueue* TQ)
 {
-    return TQ->array + TQ->front;
-}
-
-static inline void* TaskQueue_back(TaskQueue* TQ)
-{
-    return TQ->array + (TQ->back - 1);
+    return TQ->array[TQ->front];
 }
 
 static inline void TaskQueue_enqueue(TaskQueue* TQ, Task task)
@@ -75,7 +70,6 @@ static inline void TaskQueue_enqueue(TaskQueue* TQ, Task task)
         TQ->back = TQ->size;
     }
     TQ->array[TQ->back] = task;
-    // memcpy(TQ->array + TQ->back, task, sizeof (Task));
     TQ->back++;
     TQ->size++;
 }

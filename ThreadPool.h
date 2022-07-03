@@ -12,6 +12,7 @@ typedef struct ThreadPool {
     struct TaskQueue* task_queue;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
+    bool active;
 } ThreadPool;
 
 ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count);
