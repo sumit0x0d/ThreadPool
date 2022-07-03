@@ -11,7 +11,7 @@ static void* thread_create(void* TP)
             return NULL;
         }
         if(((ThreadPool*)TP)->task_queue->size) {
-            Task task = TaskQueue_front(((ThreadPool*)TP)->task_queue);
+            task = TaskQueue_front(((ThreadPool*)TP)->task_queue);
             TaskQueue_dequeue(((ThreadPool*)TP)->task_queue);
             task.function(task.argument);
         }
