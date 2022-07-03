@@ -3,22 +3,21 @@
 
 #include <pthread.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct TaskQueue TaskQueue;
-
 typedef struct ThreadPool {
-    TaskQueue* task_queue;
+    pthread_t* thread;
     size_t thread_count;
-    // size_t
+    struct TaskQueue* task_queue;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
 } ThreadPool;
 
-ThreadPool* ThreadPool_create(size_t capacity);
-void ThreadPool_destroy(ThreadPool* TP);
+ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count);
+bool ThreadPool_destroy(ThreadPool* TP);
 
-bool ThreadPool_insert(ThreadPool* TP, void (*function)(void* arguments), void* arguments);
+bool ThreadPool_insert(ThreadPool* TP, void (*function)(void*), void* argument);
 void ThreadPool_wait(ThreadPool* TP);
 void ThreadPool_pause(ThreadPool* TP);
 void ThreadPool_resume(ThreadPool* TP);
