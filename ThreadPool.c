@@ -3,21 +3,20 @@
 static void* thread_create(void* TP)
 {
     Task task;
-    for(;;) {
+    while(((ThreadPool*)TP)->active) {
         if(pthread_mutex_lock(&((ThreadPool*)TP)->mutex)) {
             return NULL;
         }
-        while(((ThreadPool*)TP)->active) {
-            if(pthread_cond_wait(&((ThreadPool*)TP)->cond, &((ThreadPool*)TP)->mutex)) {
-                return NULL;
-            }
-            if(((ThreadPool*)TP)->task_queue->size) {
-                Task task = TaskQueue_front(((ThreadPool*)TP)->task_queue);
-                TaskQueue_dequeue(((ThreadPool*)TP)->task_queue);
-                task.function(task.argument);
-            }
+        if(pthread_cond_wait(&((ThreadPool*)TP)->cond, &((ThreadPool*)TP)->mutex)) {
+            return NULL;
+        }
+        if(((ThreadPool*)TP)->task_queue->size) {
+            Task task = TaskQueue_front(((ThreadPool*)TP)->task_queue);
+            TaskQueue_dequeue(((ThreadPool*)TP)->task_queue);
+            task.function(task.argument);
         }
     }
+    return NULL;
 }
 
 ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count)
@@ -56,6 +55,7 @@ ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count)
         free(TP);
         return NULL;
     }
+    TP->active = true;
     TP->thread_count = thread_count;
     return TP;
 }
@@ -71,6 +71,7 @@ bool ThreadPool_destroy(ThreadPool* TP)
     if(pthread_mutex_destroy(&TP->mutex)) {
         return false;
     }
+    TP->active = false;
     free(TP->thread);
     TaskQueue_destroy(TP->task_queue);
     free(TP);
