@@ -14,7 +14,7 @@ typedef struct ThreadPool {
     bool active;
 } ThreadPool;
 
-static void* start_routine(void* TP)
+static void* StartRoutine(void* TP)
 {
     Task task;
     while(((ThreadPool*)TP)->active) {
@@ -46,7 +46,7 @@ ThreadPool* ThreadPoolCreate(size_t capacity, size_t thread_count)
         return NULL;
     }
     for(size_t i = 0; i < thread_count; i++) {
-        if(pthread_create(TP->thread + i, NULL, start_routine, TP)) {
+        if(pthread_create(TP->thread + i, NULL, StartRoutine, TP)) {
             free(TP->task_queue);
             free(TP);
             return NULL;
