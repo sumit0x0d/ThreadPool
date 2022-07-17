@@ -1,6 +1,20 @@
+#include "ThreadPool.h"
 #include "TaskQueue.h"
 
-static void* thread_create(void* TP)
+#include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct ThreadPool {
+    pthread_t* thread;
+    size_t thread_count;
+    TaskQueue* task_queue;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    bool active;
+} ThreadPool;
+
+static void* start_routine(void* TP)
 {
     Task task;
     while(((ThreadPool*)TP)->active) {
@@ -11,15 +25,15 @@ static void* thread_create(void* TP)
             return NULL;
         }
         if(((ThreadPool*)TP)->task_queue->size) {
-            task = TaskQueue_front(((ThreadPool*)TP)->task_queue);
-            TaskQueue_dequeue(((ThreadPool*)TP)->task_queue);
+            task = TaskQueueFront(((ThreadPool*)TP)->task_queue);
+            TaskQueueDequeue(((ThreadPool*)TP)->task_queue);
             task.function(task.argument);
         }
     }
     return NULL;
 }
 
-ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count)
+ThreadPool* ThreadPoolCreate(size_t capacity, size_t thread_count)
 {
     ThreadPool* TP = (ThreadPool*)malloc(sizeof (ThreadPool));
     if(!TP) {
@@ -32,13 +46,13 @@ ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count)
         return NULL;
     }
     for(size_t i = 0; i < thread_count; i++) {
-        if(pthread_create(TP->thread + i, NULL, thread_create, TP)) {
+        if(pthread_create(TP->thread + i, NULL, start_routine, TP)) {
             free(TP->task_queue);
             free(TP);
             return NULL;
         }
     }
-    TP->task_queue = TaskQueue_create(capacity);
+    TP->task_queue = TaskQueueCreate(capacity);
     if(!TP->task_queue) {
         free(TP);
         return NULL;
@@ -50,6 +64,7 @@ ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count)
         return NULL;
     }
 	if(pthread_cond_init(&TP->cond, NULL)) {
+        pthread_mutex_destroy(&TP->mutex);
         free(TP->thread);
         free(TP->task_queue);
         free(TP);
@@ -60,7 +75,7 @@ ThreadPool* ThreadPool_create(size_t capacity, size_t thread_count)
     return TP;
 }
 
-bool ThreadPool_destroy(ThreadPool* TP)
+bool ThreadPoolDestroy(ThreadPool* TP)
 {
     if(pthread_mutex_lock(&TP->mutex)) {
         return false;
@@ -73,13 +88,13 @@ bool ThreadPool_destroy(ThreadPool* TP)
     }
     TP->active = false;
     free(TP->thread);
-    TaskQueue_destroy(TP->task_queue);
+    TaskQueueDestroy(TP->task_queue);
     free(TP);
     TP = NULL;
     return true;
 }
 
-bool ThreadPool_insert(ThreadPool* TP, void (*function)(void*), void* argument)
+bool ThreadPoolInsert(ThreadPool* TP, void (*function)(void*), void* argument)
 {
     if(TP->task_queue->size == TP->task_queue->capacity) {
         return false;
@@ -90,7 +105,7 @@ bool ThreadPool_insert(ThreadPool* TP, void (*function)(void*), void* argument)
     Task task;
     task.function = function;
     task.argument = argument;
-    TaskQueue_enqueue(TP->task_queue, task);
+    TaskQueueEnqueue(TP->task_queue, task);
     if(pthread_cond_signal(&TP->cond)) {
         return false;
     }
@@ -100,17 +115,17 @@ bool ThreadPool_insert(ThreadPool* TP, void (*function)(void*), void* argument)
     return true;
 }
 
-void ThreadPool_wait(ThreadPool* TP)
+void ThreadPoolWait(ThreadPool* TP)
 {
     return;
 }
 
-void ThreadPool_pause(ThreadPool* TP)
+void ThreadPoolPause(ThreadPool* TP)
 {
     return;
 }
 
-void ThreadPool_resume(ThreadPool* TP)
+void ThreadPoolResume(ThreadPool* TP)
 {
     return;
 }

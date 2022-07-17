@@ -2,6 +2,6 @@
 
 int main()
 {
-    ThreadPool* TP = ThreadPool_create(10, 10);
+    ThreadPool* TP = ThreadPoolCreate(10, 10);
     return 0;
 }

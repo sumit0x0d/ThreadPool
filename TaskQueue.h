@@ -1,7 +1,8 @@
 #ifndef TASK_QUEUE_H
 #define TASK_QUEUE_H
 
-#include "ThreadPool.h"
+#include "stdlib.h"
+#include "string.h"
 
 typedef struct Task {
     void (*function)(void* argument);
@@ -16,7 +17,7 @@ typedef struct TaskQueue {
     size_t size;
 } TaskQueue;
 
-static inline TaskQueue* TaskQueue_create(size_t capacity)
+static inline TaskQueue* TaskQueueCreate(size_t capacity)
 {
     TaskQueue* TQ = (TaskQueue*)malloc(sizeof (TaskQueue));
     if(!TQ) {
@@ -34,7 +35,7 @@ static inline TaskQueue* TaskQueue_create(size_t capacity)
     return TQ;
 }
 
-static inline bool TaskQueue_change_capacity(TaskQueue* TQ, size_t capacity)
+static inline bool TaskQueueChangeCapacity(TaskQueue* TQ, size_t capacity)
 {
     Task* array = (Task*)realloc(TQ->array, capacity);
     if(!array) {
@@ -49,7 +50,7 @@ static inline bool TaskQueue_change_capacity(TaskQueue* TQ, size_t capacity)
     return true;
 }
 
-static inline void TaskQueue_destroy(TaskQueue* TQ)
+static inline void TaskQueueDestroy(TaskQueue* TQ)
 {
     free(TQ->array);
     TQ->array = NULL;
@@ -57,12 +58,12 @@ static inline void TaskQueue_destroy(TaskQueue* TQ)
     TQ = NULL;
 }
 
-static inline Task TaskQueue_front(TaskQueue* TQ)
+static inline Task TaskQueueFront(TaskQueue* TQ)
 {
     return TQ->array[TQ->front];
 }
 
-static inline void TaskQueue_enqueue(TaskQueue* TQ, Task task)
+static inline void TaskQueueEnqueue(TaskQueue* TQ, Task task)
 {
     if(TQ->back == TQ->capacity) {
         memmove(TQ->array, TQ->array + TQ->front, TQ->size);
@@ -74,7 +75,7 @@ static inline void TaskQueue_enqueue(TaskQueue* TQ, Task task)
     TQ->size++;
 }
 
-static inline void TaskQueue_dequeue(TaskQueue* TQ)
+static inline void TaskQueueDequeue(TaskQueue* TQ)
 {
     TQ->front++;
     TQ->size--;
